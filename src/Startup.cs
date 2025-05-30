@@ -41,6 +41,19 @@ namespace FeedCord
                 .ConfigureServices(SetupServices)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    webBuilder.ConfigureKestrel(serverOptions =>
+                    {
+                        var portEnv = Environment.GetEnvironmentVariable("PORT");
+                        if (int.TryParse(portEnv, out int port))
+                        {
+                            serverOptions.ListenAnyIP(port);
+                        }
+                        else
+                        {
+                            serverOptions.ListenAnyIP(8000);
+                        }
+                    });
+
                     webBuilder.Configure(app =>
                     {
                         app.UseRouting();
