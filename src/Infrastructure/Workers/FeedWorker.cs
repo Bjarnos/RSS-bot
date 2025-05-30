@@ -15,6 +15,7 @@ namespace FeedCord.Infrastructure.Workers
         private readonly INotifier _notifier;
 
         private readonly bool _persistent;
+        private readonly string _persistenceFolder;
         private readonly string _id;
         private readonly int _delayTime;
         private bool _isInitialized;
@@ -36,6 +37,9 @@ namespace FeedCord.Infrastructure.Workers
             _id = config.Id;
             _isInitialized = false;
             _persistent = config.PersistenceOnShutdown;
+            _persistenceFolder = string.IsNullOrWhiteSpace(config.PersistenceFolderPath)
+                ? AppContext.BaseDirectory
+                : config.PersistenceFolderPath;
             _logAggregator = logAggregator;
 
             logger.LogInformation("{id} Created with check interval {Interval} minutes",
@@ -99,7 +103,9 @@ namespace FeedCord.Infrastructure.Workers
 
         private void SaveDataToCsv(IReadOnlyDictionary<string, FeedState> data)
         {
-            var filePath = Path.Combine(AppContext.BaseDirectory, "feed_dump.csv");
+            var filePath = Path.Combine(_persistenceFolder, "feed_dump.csv");
+            Directory.CreateDirectory(_persistenceFolder);
+
             using var writer = new StreamWriter(filePath, append: true);
 
             foreach (var (key, value) in data)
