@@ -1,4 +1,4 @@
-﻿using FeedCord.Common;
+using FeedCord.Common;
 using FeedCord.Helpers;
 using FeedCord.Core;
 using FeedCord.Services;
@@ -14,6 +14,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
@@ -35,7 +38,22 @@ namespace FeedCord
                     SetupConfiguration(ctx, builder, args);
                 })
                 .ConfigureLogging(SetupLogging)
-                .ConfigureServices(SetupServices);
+                .ConfigureServices(SetupServices)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.Configure(app =>
+                    {
+                        app.UseRouting();
+
+                        app.UseEndpoints(endpoints =>
+                        {
+                            endpoints.MapGet("/", async context =>
+                            {
+                                await context.Response.WriteAsync("pong");
+                            });
+                        });
+                    });
+                });
         }
 
         private static void SetupConfiguration(HostBuilderContext ctx, IConfigurationBuilder builder, string[] args)
@@ -63,10 +81,10 @@ namespace FeedCord
             {
                 httpClient.Timeout = TimeSpan.FromSeconds(30);
                 httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " + 
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
                     "(KHTML, like Gecko) Chrome/104.0.5112.79 Safari/537.36"
                 );
-            }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler(){AllowAutoRedirect = true});
+            }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler() { AllowAutoRedirect = true });
 
             var concurrentRequests = ctx.Configuration.GetValue("ConcurrentRequests", 20);
 
@@ -76,7 +94,7 @@ namespace FeedCord
             }
 
             services.AddSingleton(new SemaphoreSlim(concurrentRequests));
-            
+
             services.AddSingleton<IBatchLogger, BatchLogger>(sp =>
             {
                 var logger = sp.GetRequiredService<ILogger<BatchLogger>>();
@@ -105,7 +123,7 @@ namespace FeedCord
 
             var configs = ctx.Configuration.GetSection("Instances")
                 .Get<List<Config>>() ?? new List<Config>();
-            
+
             Console.WriteLine($"Number of configurations loaded: {configs.Count}");
 
             foreach (var c in configs)
@@ -137,13 +155,11 @@ namespace FeedCord
             var context = new ValidationContext(config, serviceProvider: null, items: null);
             var results = new List<ValidationResult>();
 
-            if (Validator.TryValidateObject(config, context, results, validateAllProperties: true)) 
+            if (Validator.TryValidateObject(config, context, results, validateAllProperties: true))
                 return;
-            
+
             var errors = string.Join("\n", results.Select(r => r.ErrorMessage));
             throw new InvalidOperationException($"Invalid config entry: {errors}");
         }
     }
 }
-
-
