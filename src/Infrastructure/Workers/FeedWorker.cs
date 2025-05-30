@@ -19,7 +19,6 @@ namespace FeedCord.Infrastructure.Workers
         private readonly string _id;
         private readonly int _delayTime;
         private bool _isInitialized;
-        
 
         public FeedWorker(
             IHostApplicationLifetime lifetime,
