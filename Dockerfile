@@ -13,4 +13,6 @@ WORKDIR /app
 COPY --from=build /app/publish .
 COPY --from=build /src/appsettings.json ./config/appsettings.json
 
+EXPOSE 8000
+
 ENTRYPOINT ["dotnet", "FeedCord.dll", "/app/config/appsettings.json"]
