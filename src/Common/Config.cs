@@ -36,6 +36,8 @@ namespace FeedCord.Common
         public bool MarkdownFormat { get; set; }
         [Required(ErrorMessage = "PersistenceOnShutdown Property is required (True for saving last scan date, False for new instance data on startup)")]
         public bool PersistenceOnShutdown { get; set; }
+        [Required(ErrorMessage = "PersistenceFolderPath Property is required (set the path to a Koyeb Volume path)")]
+        public bool PersistenceFolderPath { get; set; }
         public List<PostFilters>? PostFilters { get; set; }
         public Dictionary<string, string[]>? Pings { get; set; }
         public int ConcurrentRequests { get; set; } = 5;
